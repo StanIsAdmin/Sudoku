@@ -1,68 +1,97 @@
-﻿def askvalues():
-    l = []
-    while len(l) < 9:
-        texte = "Ligne " + str(len(l) + 1) + " : "
-        t = input(texte)
-        if len(t) == 9 and t.isdigit():
-            ligne = list(map(int, t))
-            if pas_doublons(l[:], ligne[:]):
-                l.append(ligne)
-            else:
-                print("Valeurs répétées")
-        else:
-            print("Nombre ou type de valeurs incorrect")
-    sud = [ [[l[i][j]] if l[i][j]>0 else [v for v in range(1, 10)] for j in range(9)] for i in range(9)]
-    return sud
+"""
+A library designed to create, display (command line) and solve sudoku puzzles
+"""
+allowedValues = [1,2,3,4,5,6,7,8,9]
+blankValue = 0
 
-def pas_doublons(l, ligne):
-    l.append(ligne[:]) #La liste en entier
-    nbl = len(l) #Nombre de lignes
+def askValues():
+	"""
+	Asks for input via the command line
+	"""
+	sudokuValues = [] #sudoku matrix
+	while len(sudokuValues) < 9:
+		
+		#ask for values, blanks can be spaces or zeroes
+		userInput = input("Line " + str(len(sudokuValues) + 1) + " : ").replace(" ", "0")
+		
+		#complete the end of the line with blanks if line is too short		
+		if len(userInput) < 9:
+			userInput += "0"*(9-len(userInput))
+		
+		#check number and type of values	 
+		if len(userInput) == 9 and userInput.isdigit():
+			sudokuValues.append(list(map(int, userInput))) #add line to matrix
+		else:
+			print("Invalid input")
+	
+	#check if the values are valid for a sudoku
+	if not isValid(sudokuValues):
+		sudokuValues = []
+	
+	return sudokuValues
 
-    
-    ligne.sort() #La derniere ligne
-    for i in range(8): #On verifie que la dernière ligne horizontale n'a pas de doublons
-        if ligne[i]>0 and ligne[i]==ligne[i+1]:
-            print("Test horizontal, valeur :", ligne[i])
-            return False
-    if nbl == 1: #Si on a une seule ligne, pas besoin de plus de vérifications
-        return True
+def getLine(sudokuValues, index):
+	return sudokuValues[index][:]
 
-    
-    for i in range(9): #On verifie que les lignes verticales n'ont pas de doublons
-        temp = []
-        for j in range(nbl):
-            temp.append(l[j][i])
-        temp.sort()
-        for k in range(len(temp)-1):
-            if temp[k] != 0 and temp[k]==temp[k+1]:
-                print("Test vertical, ligne :", i, ", valeur :", temp[k])
-                return False
+def getLines(sudokuValues):
+	for i in range(9):
+		yield getLine(sudokuValues, i)
 
-    
-    if nbl in (1, 4, 7): drl = 1 #Lignes du dernier triplet
-    elif nbl in (2, 5, 8): drl = 2
-    else: drl = 3
-    if drl>1: #Si drl = 1 ou 2
-        for i in range(3): # --- --- --- trois carres
-            temp = []
-            for j in range(3): # - - - un carre, longueur (3 valeurs)
-                for k in range(drl): #Un carre, hauteur (drl valeurs)
-                    temp.append(l[-(k+1)][3*i + j])
-            temp.sort()
-            for m in range(len(temp)-1):
-                if temp[m] != 0 and temp[m]==temp[m+1]:
-                    print("Test derniers carres, carre :", i, "valeur :", temp[m])
-                    return False
-    return True
-                
-        
+def getColumn(sudokuValues, index):
+	return [sudokuValues[i][index] for i in range(9)]
 
-def show(sud):
-    for i in range(9):
-        if i%3==0 : print(" _____________________   _____________________   _____________________")
-        lignes = [list(" _ _ _   _ _ _   _ _ _   _ _ _   _ _ _   _ _ _   _ _ _   _ _ _   _ _ _") for i in range(3)]
-        for j in range(9):
-            for x in range(len(sud[i][j])):
-                dec = 1 + (j*8) + (x%3)*2 #decalage
-                lignes[x//3][dec] = str(sud[i][j][x])
-        print(''.join(lignes[0]), ''.join(lignes[1]), ''.join(lignes[2]), " ", sep="\n")
+def getColumns(sudokuValues):
+	for i in range(9):
+		yield getColumn(sudokuValues, i)
+
+def getSquare(sudokuValues, index):
+	topLine = (index//3)%3 *3
+	leftColumn = index%3 *3
+	return [sudokuValues[line][column] for line in range(topLine, topLine+3) \
+									for column in range(leftColumn, leftColumn+3)]
+
+def getSquares(sudokuValues):
+	for i in range(9):
+		yield getSquare(sudokuValues, i)
+
+def groupHasDuplicates(groupValues):
+	groupValues.sort()
+	for i in range(8):
+		if groupValues[i] != blankValue and groupValues[i]==groupValues[i+1]:
+			return True
+	return False
+
+def getGroups(sudokuValues):
+	for line in getLines(sudokuValues):
+		yield line
+	for column in getColumns(sudokuValues):
+		yield column
+	for square in getSquares(sudokuValues):
+		yield square
+
+def isValid(sudokuValues):	
+	#Check if horizontal lines don't have duplicates
+	for group in getGroups(sudokuValues):
+		if groupHasDuplicates(group):
+			return False
+	return True
+				
+
+def show(sudokuValues):
+	for line in range(9):
+		#separator for groups of 3 lines
+		if line%3==0 and line!=0: 
+			print("_________|_________|_________")
+			print("         |         |         ")
+
+		
+		#blank line
+		lineChars = list(" _  _  _ | _  _  _ | _  _  _")
+
+		#fill the blanks		
+		for column in range(9):
+				offset = 1 + (column*3) + (column//3)
+				value = sudokuValues[line][column]
+				if value != blankValue:
+					lineChars[offset] = str(value)
+		print(''.join(lineChars))

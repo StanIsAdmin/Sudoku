@@ -1,4 +1,4 @@
-from sudoku import askvalues, show
+from sudoku import askValues, show
 
-sudo = askvalues()
+sudo = askValues()
 show(sudo)
