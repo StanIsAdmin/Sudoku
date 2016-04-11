@@ -1,4 +1,5 @@
-from sudoku import askValues, show
+from sudoku import Sudoku
 
-sudo = askValues()
-show(sudo)
+sudo = Sudoku()
+sudo.createFromInput()
+print(sudo)
