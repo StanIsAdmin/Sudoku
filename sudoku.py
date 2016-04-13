@@ -14,14 +14,15 @@ maxTableSize=maxBoxSize**2
 
 class PreemptiveSet:
 	"""
-	A preemptive set is a list of m values, each of them between 1 and m, together with a list of m cells, with the property that no values other than the m values from the list can occupy the m cells. Values that do not occupy a cell yet are called free.
+	A preemptive set is a list of m values, each of them between 1 and m, together with a list of m cells, with the property that no values other than the m values from the list can occupy the m cells.
+	Values that do not occupy a cell yet are called free.
 	"""
 
 	def __init__(self, boxSize, cellList):
 		"""
 		Creates an instance of PreemptiveSet with the list of cells cellList and a full set of free values.
 		Raises ValueError if boxSize is not in the range (minBoxSize, maxBoxSize) or if cellList is not a list of tableSize Cells.
-		Raises Exception if all cells from cellList are not blank.
+		Raises Exception if any cells from cellList is not blank.
 		"""
 		#check type and range of boxSize
 		if not (isinstance(boxSize, int) and boxSize>=minBoxSize and boxSize<=maxBoxSize):
@@ -36,21 +37,21 @@ class PreemptiveSet:
 		#check if all cells are blank
 		for cell in cellList:
 			if not cell.isBlank():
-				raise Exception("Cell in preemptive set not blank")
+				raise Exception("Cell in preemptive set is not blank")
 		
 		self._cells = cellList #preemptive set's cells
 		self._freeValues = set([i for i in range(1, boxSize**2 +1)])
 
 	def getCells(self):
 		"""
-		Generator returning the preemptive set's cells.
+		Generator returning the preemptive set's cells. O(tableSize)
 		"""
 		for cell in self._cells:
 			yield cell
 	
 	def valueIsFree(self, value):
 		"""
-		Returns True if one of the Cells has value as its value, False otherwise.
+		Returns True if one of the Cells has value as its value, False otherwise. O(1)
 		Raises ValueError if value is not in the range (1, tableSize)
 		"""
 		#check value type and range
@@ -62,13 +63,13 @@ class PreemptiveSet:
 
 	def getFreeValues(self):
 		"""
-		Returns a set containing the free values of the preemptive set.
+		Returns a set containing the free values of the preemptive set. O(tableSize)
 		"""
 		return self._freeValues.copy()
 	
 	def isComplete(self):
 		"""
-		Returns True if each cell of the preemptive set's values is in exactly one cell, False otherwise.
+		Returns True if each cell of the preemptive set's values is in exactly one cell, False otherwise. O(1)
 		"""
 		#empty set of free values will be converted to False, non empty set to True
 		return not bool(self._freeValues)
@@ -77,14 +78,14 @@ class PreemptiveSet:
 
 class Cell:
 	"""
-	Class representing a cell of the sudoku table.
+	Class representing a cell of the sudoku.
 	A Cell is either blank or has a value, that can range from 1 to the sudoku's tableSize.
 	A Cell has markup values, which are the values it can hold without violating the sudoku rules.
 	"""
 
 	def __init__(self, boxSize):
 		"""
-		Creates an instance of Cell allowing values in the range (1, boxSize**2).
+		Creates an instance of Cell allowing values in the range (1, tableSize).
 		Upon construction, the Cell is Blank.
 		Raises ValueError if boxSize is not in the range (minBoxSize, maxBoxSize).
 		"""
@@ -101,25 +102,25 @@ class Cell:
 
 	def getLinePSet(self):
 		"""
-		Returns the preemptive set of the cell's line.
+		Returns the preemptive set of the cell's line. O(1)
 		"""
 		return self._linePSet
 
 	def getColumnPSet(self):
 		"""
-		Returns the preemptive set of the cell's column.
+		Returns the preemptive set of the cell's column. O(1)
 		"""
 		return self._columnPSet
 
 	def getBoxPSet(self):
 		"""
-		Returns the preemptive set of the cell's box.
+		Returns the preemptive set of the cell's box. O(1)
 		"""
 		return self._boxPSet
 
 	def getPSets(self):
 		"""
-		Generator returning the preemptive sets of the cell's line, column and box (in this order).
+		Generator returning the preemptive sets of the cell's line, column and box (in this order). O(1)
 		"""
 		yield self.getLinePSet()
 		yield self.getColumnPSet()
@@ -127,7 +128,7 @@ class Cell:
 
 	def setValue(self, value):
 		"""
-		Sets the value of the cell, and removes value from the free values of the cell's preemptive sets.
+		Sets the value of the cell, and removes value from the free values of the cell's preemptive sets. O(tableSize)
 		Raises ValueError if value is not in the range (1, tableSize).
 		Raises Exception if cell already has a value or if value is not permitted for this cell.
 		"""
@@ -148,21 +149,19 @@ class Cell:
 
 	def clearValue(self):
 		"""
-		Clears the value of the cell, and adds value to the free values of the cell's preemptive sets.
-		Raises Exception if cell has no value.
+		Clears the value of the cell, and adds value to the free values of the cell's preemptive sets. O(tableSize)
 		"""
-		#check if cell has value
-		if self.isBlank():
-			raise Exception("Cell has no value")
-		
-		#add value to the free values in the preemtive sets the cell belongs to
-		for pSet in self.getPSets():
-			pSet._freeValues.add(self._value)
-		self._value = None #make cell blank
+		#if cell has a value
+		if not self.isBlank():
+			#add value to the free values in the preemtive sets the cell belongs to
+			for pSet in self.getPSets():
+				pSet._freeValues.add(self._value)
+			
+			self._value = None #make cell blank
 
 	def changeValue(self, value):
 		"""
-		Clears the cell's value, then sets it to value.
+		Clears the cell's value, then sets it to value. O(tableSize)
 		Same as calling clearValue() then setValue(value)
 		"""
 		self.clearValue()
@@ -170,19 +169,19 @@ class Cell:
 
 	def isBlank(self):
 		"""
-		Returns True if the Cell is blank, False otherwise
+		Returns True if the Cell is blank, False otherwise. O(1)
 		"""
 		return self._value is None
 
 	def getValue(self):
 		"""
-		Returns the value contained by the Cell, or None if the Cell is blank.
+		Returns the value contained by the Cell, or None if the Cell is blank. O(1)
 		"""
 		return self._value
 
 	def getMarkupValues(self):
 		"""
-		Returns a set containing the markup values of the cell.
+		Returns a set containing the markup values of the cell. O(tableSize)
 		"""
 		#cell's markup values is the intersection of each of it's preemptive set's free values
 		return self._linePSet._freeValues \
@@ -191,7 +190,7 @@ class Cell:
 
 	def hasMarkupValue(self, value):
 		"""
-		Returns True if value is in the markup values of the cell, False otherwise.
+		Returns True if value is in the markup values of the cell, False otherwise. O(tableSize)
 		Raises ValueError if value is not within the range of allowed values.
 		"""
 		#check value type and range
@@ -202,7 +201,7 @@ class Cell:
 
 	def getMarkupCount(self):
 		"""
-		Returns the markup count of the cell (number of markup values).
+		Returns the markup count of the cell (number of markup values). O(tableSize)
 		"""
 		return len(self.getMarkupValues())
 		
@@ -212,6 +211,8 @@ class Sudoku:
 	"""
 	Class representing the sudoku table.
 	A Sudoku of boxSize n has a tableSize of n**2 and is made of tableSize**2 cells.
+	A Sudoku can be divided into tableSize lines, columns and boxes, each containing tableSize cells. Each line, column and box can be identified by an index, ranging from O to tableSize-1. Indexes go from top to bottom and from left to right.
+	A Cell can be identified by its coordinates (x, y) where x and y are respectively the index of the line and column that contain the Cell.
 	"""
 
 	def __init__(self, boxSize):
@@ -232,7 +233,7 @@ class Sudoku:
 			
 	def clear(self):
 		"""
-		Resets all Cells of the Sudoku, leaving them blank and with full markups.
+		Resets all Cells of the Sudoku, leaving them blank and with full markups. O(tableSize**2)
 		"""
 		self._cells = [] #clear all of the cells
 
@@ -262,20 +263,20 @@ class Sudoku:
 	
 	def getBoxIndexFromCell(self, cellLine, cellColumn):
 		"""
-		Returns the index of the box containing the cell of coordinates (cellLine, cellColumn).
+		Returns the index of the box containing the cell of coordinates (cellLine, cellColumn). O(1)
 		"""
 		return cellColumn//3 + cellLine//3 *3
 
 	def getCellCoordsFromBox(self, boxIndex):
 		"""
-		Returns the coordinates of the upper left Cell contained in the box of index boxIndex.
+		Returns the coordinates of the upper left Cell contained in the box of index boxIndex. O(1)
 		"""
 		return ((boxIndex//self.boxSize)%self.boxSize * self.boxSize,
 				boxIndex%self.boxSize * self.boxSize)
 
 	def getCell(self, cellLine, cellColumn):
 		"""
-		Returns the cell located at line cellLine and column cellColumn.
+		Returns the cell of coordinates (cellLine, cellColumn). O(1)
 		"""
 		#check coordinate's type and range
 		if not (isinstance(cellLine, int) and cellLine>=0 and cellLine<self.tableSize):
@@ -287,7 +288,7 @@ class Sudoku:
 
 	def getCells(self):
 		"""
-		Generator returning all of the sudoku's cells, from left to right and top to bottom.
+		Generator returning all of the sudoku's cells, from left to right and top to bottom. O(tableSize**2)
 		"""
 		for cellLine in self._cells:
 			for cell in cellLine:
@@ -295,46 +296,46 @@ class Sudoku:
 		
 	def getLineSet(self, lineIndex):
 		"""
-		Returns the PreemptiveSet that contains the cells in line index.
+		Returns the preemptive set that contains the cells in line of index lineIndex. O(1)
 		"""
-		return self.getCell(lineIndex, 0).getLineSet()
+		return self.getCell(lineIndex, 0).getLinePSet()
 
 	def getColumnSet(self, columnIndex):
 		"""
-		Returns the PreemptiveSet that contains the cells in column index.
+		Returns the preemptive set that contains the cells in column of index columnIndex. O(1)
 		"""
-		return self.getCell(0, columnIndex).getColumnSet()
+		return self.getCell(0, columnIndex).getColumnPSet()
 
 	def getBoxSet(self, boxIndex):
 		"""
-		Returns the PreemptiveSet that contains the cells in box boxIndex.
+		Returns the preemptive set that contains the cells in box of index boxIndex. O(1)
 		"""
-		return self.getCell(getCellIndexFromBox(boxIndex)).getBoxSet()
+		return self.getCell(getCellIndexFromBox(boxIndex)).getBoxPSet()
 
 	def getLineSets(self):
 		"""
-		Generator returning the PreemptiveSet of each line.
+		Generator returning the preemptive set of each line. O(tableSize)
 		"""
 		for i in range(self.tableSize):
 			yield self.getLineSet(i)
 
 	def getColumnSets(self):
 		"""
-		Generator returning the PreemptiveSet of each column.
+		Generator returning the preemptive set of each column. O(tableSize)
 		"""
 		for i in range(self.tableSize):
 			yield self.getColumnSet(i)
 
 	def getBoxSets(self):
 		"""
-		Generator returning the PreemptiveSet of each box.
+		Generator returning the preemptive set of each box. O(tableSize)
 		"""
 		for i in range(self.tableSize):
 			yield self.getBoxSet(i)
 
 	def getAllSets(self):
 		"""
-		Generator returning the PreemptiveSet of each line, column and box (in this order).
+		Generator returning the preemptive set of each line, column and box (in this order). O(tableSize)
 		"""
 		for line in self.getLineSets():
 			yield line
@@ -344,9 +345,15 @@ class Sudoku:
 			yield box
 
 	def getCellSets(self, cellLine, cellColumn):
+		"""
+		Returns the preemptive sets that contain the cell of coordinates (cellLine, cellColumn). O(1)
+		"""
 		return self.getCell(cellLine, cellColumn).getSets()
 
 	def isComplete(self):
+		"""
+		Returns True if the sudoku is complete, False otherwise. O(tableSize)
+		"""
 		for pSet in self.getLineSets():
 			if not pSet.isComplete():
 				return False
@@ -354,9 +361,9 @@ class Sudoku:
 
 	def __repr__(self):
 		#Separators
-		valueMaxWidth = len(str(self.tableSize))
-		boxSep = "-" * (valueMaxWidth+2) * self.boxSize
-		boxBlank = (" " + ("-"*valueMaxWidth) + " ") * self.boxSize
+		maxValueWidth = len(str(self.tableSize))
+		boxSep = "-" * (maxValueWidth+2) * self.boxSize
+		boxBlank = (" " + ("-"*maxValueWidth) + " ") * self.boxSize
 		
 		topBottomSep = "+" + (boxSep + "-")*(self.boxSize-1) + boxSep + "+"
 		middleSep = "|" + (boxSep + "+")*(self.boxSize-1) + boxSep + "|"
@@ -380,9 +387,9 @@ class Sudoku:
 				#display cell's content
 				lineChars.append(" ")
 				if cell.isBlank():
-					lineChars.append("-"*valueMaxWidth)
+					lineChars.append("-"*maxValueWidth)
 				else:
-					lineChars.append(str(cell.getValue()).rjust(valueMaxWidth))
+					lineChars.append(str(cell.getValue()).rjust(maxValueWidth))
 				lineChars.append(" ")
 			lineChars.append("|")
 			lineList.append(''.join(lineChars))
@@ -391,89 +398,116 @@ class Sudoku:
 		return "\n".join(lineList)
 
 
+
+
+
 #LIBRARY FUNCTIONS
 
-def fillSudokuFromInput(sudoku, safetyClear=False):
+def fillSudokuFromInput(sudoku, clearIfQuit=False):
 	"""
 	Fills the sudoku by asking for input via the command line.
 	Returns True in case of success, False if the user quits during the process.
-	If safetyClear is True, sudoku is cleared if/when the user quits.
+	If clearIfQuit is True, sudoku is cleared if/when the user quits.
 	"""
 
 	#print instructions
-	blankValue = 0
-	print("Use spaces or zeros for blanks, other options are :\n\t- q to quit\n\t- c to clear previous line\n\t- p to print sudoku\n\t- e to end and save sudoku")
+	print("Use zeros for blanks and spaces between each value, options are :\n\t- q to quit\n\t- c to clear current/previous line\n\t- p to print sudoku\n\t- e to end and save sudoku")
 
-	#print header
+	#header
 	inputTextSize = 10
-	headerLine = " "*inputTextSize + "".join([str(i+1) for i in range(sudoku.tableSize)]) + "\n" +\
-				" "*inputTextSize + "".join(["|" for i in range(sudoku.tableSize)])
-	print(headerLine)
+	maxValueWidth = len(str(sudoku.tableSize))
+	headerLine = " "*inputTextSize + \
+				" ".join([str(i+1).ljust(maxValueWidth) for i in range(sudoku.tableSize)]) + "\n" +\
+				" "*inputTextSize + \
+				" ".join(["|".ljust(maxValueWidth) for i in range(sudoku.tableSize)])
 	
 	lineIndex = 0
 	columnOffset = 0
+	print(headerLine)
 	while lineIndex < sudoku.tableSize:
 		#ask for input
 		query = "Line " + str(lineIndex + 1) + ": "
-		inputText = query + " "*(inputTextSize-len(query)) + "-"*columnOffset
+		inputText = query + " "*(inputTextSize-len(query)) + " "*(maxValueWidth+1)*columnOffset
 		userInput = input(inputText)
 
 		#if user wants to quit
-		if userInput.count("q")>0:
-			if safetyClear: #clear sudoku if user quits
+		if userInput=="q":
+			if clearIfQuit: #clear sudoku if user quits
 				sudoku.clear()
 			return False #failure
 		
 		#if user wants to clear last line
-		if userInput.count("c")>0:
-			if (lineIndex==0):
+		if userInput=="c":
+			if (lineIndex==0 and columnOffset==0):	#nothing to delete
 				print("No previous line to clear")
-			else:
-				#clear all cells in last line
-				for columnIndex in range(sudoku.tableSize):
-					sudoku.clearCellValue(lineIndex, columnIndex)
-				lineIndex -= 1
-				columnOffset = 0
+				print(headerLine)
+			elif (columnOffset>0):					#delete current line
+				columnOffset = 0 #reset columnOffset
+				for columnIndex in range(sudoku.tableSize): #clear all cells in current line
+					sudoku.getCell(lineIndex, columnIndex).clearValue()
+			else:									#delete previous line
+				lineIndex -= 1 #decrement line count
+				for columnIndex in range(sudoku.tableSize): #clear all cells in previous line
+					sudoku.getCell(lineIndex, columnIndex).clearValue()
 			continue #start the loop again
 
 		#if user wants to print sudoku
-		if userInput.count("p")>0:
+		if userInput=="p":
 			print(sudoku)
 			print(headerLine)
 			continue
 	
 		#if user wants to end and save sudoku
-		if userInput.count("e")>0:
+		if userInput=="e":
 			return True #success
 		
-		#if user wants to continue filling the sudoku
-		userInput.replace(" ", str(blankValue))
-		userInput = str(blankValue)*columnOffset + userInput
+		#if user wants to continue filling the sudoku:
+		#check if values are integers
+		try:
+			userValues = [int(v) for v in userInput.split(" ") if v!=""]
+		except:
+			print("Invalid input : values must be integers separated by spaces")
+			print(headerLine)
+			continue
+			
+		#add zeros for columns we already completed
+		userValues = [0 for i in range(columnOffset)] + userValues
+		if len(userValues) < sudoku.tableSize:
+			userValues += [0 for i in range(sudoku.tableSize-len(userValues))]
 	
-		#complete the end of the line with blanks if line is too short
-		if len(userInput) < sudoku.tableSize:
-			userInput += str(blankValue)*(sudoku.tableSize-columnOffset-len(userInput))
-	
-		#check number and type of values	 
-		if not (len(userInput) == sudoku.tableSize and userInput.isdigit()):
-			print("Invalid input")
+		#check number of values
+		if not (len(userValues) == sudoku.tableSize):
+			print("Invalid input : there are too many values")
+			print(headerLine)
+			continue
+		
+		#check range of values
+		for value in userValues:
+			error=False
+			if value<0 or value>sudoku.tableSize:
+				print("Invalid input : values are not in range (0, ", str(sudoku.tableSize), ")")
+				print(headerLine)
+				error=True
+				break
+		if error:
 			continue
 		
 		#try to insert the values in the table
 		columnCount=0
-		#try:
-		for columnIndex in range(sudoku.tableSize):
-			columnCount=columnIndex
-			value = int(userInput[columnIndex])
-			if (value != blankValue):
-				sudoku.getCell(lineIndex, columnIndex).setValue(value)
-		"""except Exception as e:
-			print("Error when inserting in column " + str(columnCount+1) + ":")
-			print(e)
+		try:
+			for columnIndex in range(sudoku.tableSize):
+				columnCount=columnIndex
+				value = userValues[columnIndex]
+				if (value != 0):
+					sudoku.getCell(lineIndex, columnIndex).setValue(value)
+		except Exception as e:
+			print("Error when inserting in column " + str(columnCount+1) + ": ", e)
+			print(headerLine)
+			#lineIndex stays the same, columnOffset is set to wherever we stopped
 			columnOffset = columnCount
 		else:
 			lineIndex += 1
-			columnOffset = 0"""
+			columnOffset = 0
 
 	return True #success
 
