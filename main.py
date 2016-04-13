@@ -1,5 +1,5 @@
-from sudoku import Sudoku
+from sudoku import *
 
-sudo = Sudoku()
-sudo.createFromInput()
+sudo = Sudoku(3)
+fillSudokuFromInput(sudo)
 print(sudo)
