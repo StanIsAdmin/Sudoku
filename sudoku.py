@@ -1,28 +1,36 @@
 """
-A library designed to create, display (command line) and solve sudoku puzzles
+A library designed to create, display (command line) and solve sudoku puzzles.
 """
-blankValue = 0
 
+#Allowed sizes for the sudoku's boxes
 minBoxSize=2
 maxBoxSize=8
+
+#Allowed sizes for the sudoku's table
+minTableSize=minBoxSize**2
+maxTableSize=maxBoxSize**2
 
 class Cell:
 	"""
 	Class representing a cell of the sudoku table.
+	A Cell is either Blank or has a Value, that can range from 1 to the sudoku's tableSize.
+	A Cell contains markup values, which are the values it can hold without violating the sudoku rules.
 	"""
+
+	self.blankValue = 0
 
 	def __init__(self, boxSize):
 		"""
 		Creates an instance of Cell allowing values in the range (1, boxSize**2).
-		Upon construction, the markup (possible) values of the cell consist of all of the possible values, and the value of the cell itself is blankValue.
-		Raises ValueError if boxSize is not an int or is not in the range (minBoxSize, maxBoxSize).
+		Upon construction, the markup values of the Cell consist of all of the possible values, and the Cell itself is left Blank.
+		Raises ValueError if boxSize is not in the range (minBoxSize, maxBoxSize).
 		"""
 		#check value type and range
 		if not (isinstance(boxSize, int) and boxSize>=minBoxSize and boxSize<=maxBoxSize):
 			raise ValueError
 
 		tableSize=boxSize**2 #size of the table
-		self.value = blankValue
+		self.value = self.blankValue
 
 		#list of possible values (>0 when possible), where value is index+1
 		#3 means none of pSets containing the cell have the set the value (value is free)
@@ -32,7 +40,7 @@ class Cell:
 
 	def __setValue__(self, value):
 		"""
-		PRIVATE METHOD.
+		PRIVATE METHOD. SUDOKU INTEGRITY NOT GUARANTEED.
 		Sets the value of the cell.
 		Raises ValueError if value is not in the range (1, tableSize).
 		Raises Exception if cell already has a value.
@@ -41,21 +49,26 @@ class Cell:
 		if not (isinstance(value, int) and value>0 and value <=len(self.markupValues)):
 			raise ValueError
 		#check if cell is blank
-		if not (self.isBlank()):
+		if not self.isBlank():
 			raise Exception("Cell already has a value")
 		
 		self.value = value
 
 	def __clearValue__(self):
 		"""
-		PRIVATE METHOD.
+		PRIVATE METHOD. SUDOKU INTEGRITY NOT GUARANTEED.
 		Clears the value of the cell.
+		Raises Exception if cell has no value.
 		"""
+		#check if cell has value
+		if self.isBlank():
+			raise Exception("Cell has no value")
+		
 		self.value = blankValue
 		
 	def __addMarkupValue__(self, value):
 		"""
-		PRIVATE METHOD.
+		PRIVATE METHOD. SUDOKU INTEGRITY NOT GUARANTEED.
 		Adds value to the markup values of the cell.
 		Raises ValueError if value is not in the range (1, tableSize).
 		Raises Exception if value is already in markup values for the 3 preemptive sets containing the cell.
@@ -76,7 +89,7 @@ class Cell:
 
 	def __removeMarkupValue__(self, value):
 		"""
-		PRIVATE METHOD.
+		PRIVATE METHOD. SUDOKU INTEGRITY NOT GUARANTEED.
 		Removes value from the markup values of the cell.
 		Raises Exception if no markup value remain for the cell.
 		Returns True if only one markup value remains, False otherwise.
