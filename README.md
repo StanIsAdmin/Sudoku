@@ -1,2 +1,2 @@
 # Sudoku
-A simple program that solves sudoku puzzles
+A simple library for creating, interacting with and solving sudokus of any size.
